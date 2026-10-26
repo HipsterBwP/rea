@@ -198,6 +198,13 @@ cmd_install_adb() {
     find_adb; say "adb already present: $ADB"; "$ADB" version | head -1; return
   fi
   local os url zip
+  # Google ships Linux platform-tools for x86_64 only; iSH on iPhone is 32-bit Alpine.
+  if [ "$(uname -s)" = Linux ] && [ "$(uname -m)" != x86_64 ]; then
+    command -v apk >/dev/null 2>&1 || die "no Google adb build for $(uname -m); install your distro's android-tools package"
+    say "Installing adb from Alpine's official android-tools package (Google has no build for $(uname -m))."
+    apk add android-tools || die "apk add android-tools failed"
+    find_adb; "$ADB" version | head -1; return
+  fi
   case "$(uname -s)" in
     Darwin) os=darwin ;; Linux) os=linux ;;
     *) die "on Windows, download https://dl.google.com/android/repository/platform-tools-latest-windows.zip and run this script from WSL or Git Bash" ;;
